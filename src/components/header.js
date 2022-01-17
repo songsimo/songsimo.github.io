@@ -13,7 +13,7 @@ const HeaderStyles = styled.header`
     }
     nav ul li a {
         display: inline-blok;
-        padding: 1rem
+        padding: 1rem 
     }
 `;
 
