@@ -1,0 +1,6 @@
+services:
+  songsimogithub:
+    image: songsimogithub
+    build:
+      context: .
+      dockerfile: ./Dockerfile
