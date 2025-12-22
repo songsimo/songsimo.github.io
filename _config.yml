@@ -198,6 +198,8 @@ defaults:
 sass:
   style: compressed
   implementation: sass-embedded
+  load_paths:
+    - _sass
 
 compress_html:
   clippings: all
