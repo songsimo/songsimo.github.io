@@ -22,3 +22,6 @@ group :jekyll_plugins do
   gem "jekyll-sitemap"
   gem "jekyll-mermaid"
 end
+
+gem "sass-embedded", "~> 1.70" # 최신 Sass 컴파일러
+gem "webrick"                  # Ruby 3.0 이상에서 필요한 기본 서버 라이브러리
