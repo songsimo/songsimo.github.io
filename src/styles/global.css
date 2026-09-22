@@ -1,0 +1,78 @@
+@import "tailwindcss";
+@import "./theme.css";
+@import "./typography.css";
+@import "rehype-callouts/theme/obsidian";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@layer base {
+  * {
+    @apply border-border outline-accent/75;
+    scrollbar-width: auto;
+    scrollbar-color: var(--color-muted) transparent;
+  }
+  a,
+  button,
+  #main-content {
+    @apply outline-accent outline-offset-1 focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-dashed;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@utility max-w-app {
+  @apply max-w-3xl;
+}
+
+@utility app-layout {
+  @apply max-w-app mx-auto w-full px-4;
+}
+
+@utility active-nav {
+  @apply underline decoration-wavy decoration-2 underline-offset-8;
+}
+
+:target {
+  scroll-margin-block: 1rem;
+}
+
+/*
+ * ===== Pixel accents (restrained) =====
+ * Pixel font + tiny hard-shadow chips are used only for small elements:
+ * the logo, tag chips, and section eyebrow labels. Everything else
+ * (headings, body copy, buttons) stays in the normal typeface so the
+ * page reads clean and light, not like a retro arcade cabinet.
+ */
+
+@utility font-pixel {
+  font-family: var(--font-pixel), monospace;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+}
+
+/* Small "pixel badge" used for eyebrow labels above headings */
+@utility pixel-badge {
+  @apply text-accent bg-accent/10 inline-flex items-center gap-1 rounded-sm px-2 py-1 text-[10px] uppercase;
+}
+
+/* Soft hard-shadow used sparingly on primary buttons */
+@utility retro-shadow {
+  border: 1.5px solid var(--color-border);
+  box-shadow: 3px 3px 0 0 var(--color-border);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translate(1.5px, 1.5px);
+    box-shadow: 1.5px 1.5px 0 0 var(--color-border);
+  }
+}
+
+@utility retro-chip {
+  @apply text-foreground bg-muted inline-flex items-center gap-1 rounded-sm border px-2 py-1 text-xs uppercase;
+  border-color: var(--color-border);
+  box-shadow: 2px 2px 0 0 var(--color-border);
+}

@@ -1,0 +1,124 @@
+---
+import { useTranslations } from "@/i18n";
+import config from "@/config";
+
+type Heading = { depth: number; slug: string; text: string };
+
+type Props = {
+  headings: Heading[];
+  side?: "left" | "right";
+};
+
+const { headings, side = "right" } = Astro.props;
+const locale = Astro.currentLocale ?? config.site.lang;
+const t = useTranslations(locale);
+
+const items = headings.filter(h => h.depth === 2);
+---
+
+{
+  items.length > 1 && (
+    <nav
+      id="toc"
+      aria-label={t.post.tableOfContents}
+      class:list={[
+        // Only shown once there's guaranteed room beside the centered
+        // article (see the left/right offset below) so it never overlaps
+        // or shifts the article off-center.
+        "hidden 2xl:block 2xl:fixed 2xl:top-24 2xl:w-56",
+        "2xl:max-h-[calc(100vh-7rem)] 2xl:overflow-y-auto",
+        // Hidden on load; the script below fades it in once you scroll
+        // past the title, and it then stays fixed on screen (it never
+        // scrolls away, unlike a "sticky" element would).
+        "-translate-y-1 opacity-0 transition duration-300 2xl:pointer-events-none",
+        // Anchored a fixed distance from the viewport's own center, so it
+        // always sits just outside the article's edge no matter how wide
+        // the browser window is.
+        side === "left"
+          ? "2xl:right-[calc(50vw_+_26.5rem)]"
+          : "2xl:left-[calc(50vw_+_26.5rem)]",
+      ]}
+    >
+      <p class="text-muted-foreground font-pixel mb-3 text-xs uppercase">
+        {t.post.tableOfContents}
+      </p>
+      <ul class="space-y-2 text-sm">
+        {items.map(h => (
+          <li>
+            <a
+              href={`#${h.slug}`}
+              data-toc-link={h.slug}
+              class="text-muted-foreground hover:text-foreground data-[active=true]:text-accent data-[active=true]:border-accent block border-s-2 border-transparent py-0.5 ps-3 transition-colors"
+            >
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<script is:inline data-astro-rerun>
+  function initToc() {
+    const toc = document.querySelector("#toc");
+    if (!toc) return;
+
+    const title = document.querySelector("#main-content h1");
+    const links = Array.from(toc.querySelectorAll("[data-toc-link]"));
+    const targets = links
+      .map(link => {
+        const slug = link.getAttribute("data-toc-link");
+        const heading = slug ? document.getElementById(slug) : null;
+        return heading ? { link, heading } : null;
+      })
+      .filter(Boolean);
+
+    let visible = false;
+    function setVisible(next) {
+      if (next === visible) return;
+      visible = next;
+      toc.classList.toggle("opacity-100", next);
+      toc.classList.toggle("opacity-0", !next);
+      toc.classList.toggle("translate-y-0", next);
+      toc.classList.toggle("-translate-y-1", !next);
+      toc.classList.toggle("2xl:pointer-events-auto", next);
+      toc.classList.toggle("2xl:pointer-events-none", !next);
+    }
+
+    if (title) {
+      const revealObserver = new IntersectionObserver(
+        entries => {
+          for (const entry of entries) {
+            setVisible(!entry.isIntersecting);
+          }
+        },
+        { rootMargin: "-96px 0px 0px 0px" }
+      );
+      revealObserver.observe(title);
+    } else {
+      setVisible(true);
+    }
+
+    if (targets.length > 0) {
+      const activeObserver = new IntersectionObserver(
+        entries => {
+          for (const entry of entries) {
+            const match = targets.find(target => target.heading === entry.target);
+            if (match && entry.isIntersecting) {
+              for (const other of targets) {
+                other.link.removeAttribute("data-active");
+              }
+              match.link.setAttribute("data-active", "true");
+            }
+          }
+        },
+        { rootMargin: "-100px 0px -70% 0px" }
+      );
+      for (const { heading } of targets) {
+        activeObserver.observe(heading);
+      }
+    }
+  }
+  initToc();
+</script>
