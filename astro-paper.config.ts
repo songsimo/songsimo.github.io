@@ -4,10 +4,10 @@ export default defineAstroPaperConfig({
   site: {
     // TODO: 실제 GitHub Pages 저장소 이름과 맞춰주세요 (예: https://<username>.github.io/)
     url: "https://songsimo.github.io/",
-    title: "CONTINUE.LOG",
-    description: "코드, 회고, 성장 기록을 남기는 기술 블로그",
+    title: "PATHFINDER.LOG",
+    description: "나의 여정을 기록하는 블로그",
     // TODO: 실제 이름(또는 닉네임)으로 교체하세요 — meta 태그, OG 이미지, 글 작성자 표시에 쓰입니다
-    author: "블로그 주인장",
+    author: "songsimo",
     // TODO: 원하는 프로필 링크(예: 이력서, 노션, 개인 사이트)로 교체하세요
     profile: "",
     ogImage: "default-og.jpg",
@@ -35,7 +35,7 @@ export default defineAstroPaperConfig({
   // TODO: 아래 소셜 링크를 실제 계정 주소로 교체하세요 (필요 없는 항목은 삭제해도 됩니다)
   socials: [
     { name: "github", url: "https://github.com/songsimo" },
-    { name: "mail", url: "mailto:you@example.com" },
+    { name: "mail", url: "chy.song89@gmail.com" },
   ],
   shareLinks: [
     { name: "whatsapp", url: "https://wa.me/?text=" },
