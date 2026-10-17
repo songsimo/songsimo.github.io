@@ -1,0 +1,43 @@
+---
+import { Image } from "astro:assets";
+import avatar from "@/assets/about/avatar.svg";
+import SectionHeader from "./SectionHeader.astro";
+import { getAssetPath } from "@/utils/withBase";
+import { about } from "@/data/about";
+---
+
+<section class="section" id="about" aria-labelledby="about-title" tabindex="-1">
+  <SectionHeader id="about" title="소개" />
+
+  <div class="about reveal">
+    <figure>
+      <Image
+        class="about__avatar"
+        src={avatar}
+        alt={about.avatarAlt}
+        width={160}
+        height={160}
+        loading="lazy"
+      />
+    </figure>
+
+    <div class="about__body">
+      {about.paragraphs.map(text => <p>{text}</p>)}
+      <p>
+        배운 것은 <a href={getAssetPath("")}>블로그</a>에 기록으로 남기고, 이
+        페이지에서 직접 만든 결과물을 보여드립니다.
+      </p>
+
+      <dl class="facts">
+        {
+          about.facts.map(({ label, value }) => (
+            <div class="facts__row">
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </div>
+</section>

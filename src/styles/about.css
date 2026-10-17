@@ -1,0 +1,687 @@
+/* ==========================================================================
+   about.css — /about(프로필) 페이지 (순수 CSS, 라이브러리 없음)
+
+   /about은 블로그와 같은 레이아웃(Layout · Header · Breadcrumb · Footer)
+   안에서 렌더링된다. 그래서 이 파일은
+     - 블로그가 이미 정한 색·글꼴 토큰(--background, --accent, --border …)을 그대로 쓰고,
+     - 블로그에 없는 값(카드 배경, 에러 색 등)만 아래 1번에서 새로 정의하며,
+     - 모든 규칙을 .profile 안으로 한정해서 블로그 헤더·푸터에 영향을 주지 않는다.
+
+   목차
+   1. 디자인 토큰 (:root + [data-theme="dark"])
+   2. 기본 요소 (.profile 안으로 한정)
+   3. 레이아웃 (section)
+   4. 컴포넌트 (page-nav, button, badge, card, chip, state, form, scroll-top)
+   5. 섹션별 스타일 (hero, about, skills, projects, contact)
+   6. 애니메이션 / 접근성 (reveal, reduced-motion)
+   7. 반응형 — 모바일 퍼스트: 기본 = 모바일, 768px ↑ 태블릿, 1024px ↑ 데스크톱
+   ========================================================================== */
+
+/* ---------- 1. 디자인 토큰 ----------
+   블로그 토큰(src/styles/theme.css)에 없는 값만 여기서 정의한다.
+   다크 모드는 블로그 헤더의 토글이 <html data-theme>을 바꾸면 함께 바뀐다. */
+:root {
+  --p-surface: #ffffff;
+  --p-border-strong: #b7c2a3;
+  --p-accent-soft: rgba(47, 125, 79, 0.12);
+  --p-danger: #b3261e;
+  --p-grid-dot: rgba(47, 125, 79, 0.22);
+  --p-nav-bg: rgba(248, 250, 243, 0.97);
+
+  --p-nav-height: 3rem;
+  --p-radius: 0.375rem;
+  --p-transition: 0.2s ease;
+}
+
+[data-theme="dark"] {
+  --p-surface: #1b251c;
+  --p-border-strong: #46594a;
+  --p-accent-soft: rgba(87, 193, 124, 0.14);
+  --p-danger: #ff8a80;
+  --p-grid-dot: rgba(87, 193, 124, 0.2);
+  --p-nav-bg: rgba(21, 29, 22, 0.97);
+}
+
+/* ---------- 2. 기본 요소 ----------
+   :where()는 우선순위가 0이라, 아래 컴포넌트 규칙이 항상 이긴다.
+   (블로그가 쓰는 Tailwind 리셋: 링크 색·밑줄 없음, 목록 기호 없음, 제목 크기 상속) */
+:where(.profile) {
+  line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+:where(.profile) a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+:where(.profile) a:hover {
+  text-decoration-style: dashed;
+}
+
+:where(.profile) :is(h1, h2, h3) {
+  font-weight: 600;
+}
+
+/* 스크립트로 포커스를 옮기는 섹션에는 링 대신 아무것도 표시하지 않는다 */
+.profile [tabindex="-1"]:focus {
+  outline: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- 3. 레이아웃 ---------- */
+.profile .section {
+  padding-block: 1.5rem;
+  scroll-margin-top: calc(var(--p-nav-height) + 0.5rem);
+}
+
+.profile .section__header {
+  margin-bottom: 1.5rem;
+}
+
+.profile .section__title {
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+.profile .section__desc {
+  margin-top: 0.5rem;
+  color: var(--muted-foreground);
+}
+
+.profile .accent {
+  color: var(--accent);
+}
+
+/* ---------- 4. 컴포넌트 ---------- */
+
+/* sticky가 동작하려면 조상에 스크롤 컨테이너가 없어야 한다.
+   블로그 body의 overflow-x: hidden은 스크롤 컨테이너를 만들기 때문에,
+   이 페이지에서만 clip(가로 넘침은 자르되 스크롤 컨테이너는 만들지 않음)으로 바꾼다. */
+body:has(#profile) {
+  overflow-x: clip;
+}
+
+/* 4-1. 섹션 내비게이션 (Flexbox) — 스크롤이 60px을 넘으면 JS가 is-scrolled를 붙인다 */
+.page-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--p-nav-height);
+  margin-top: 1rem;
+  border-bottom: 1px solid var(--border);
+  transition:
+    background-color var(--p-transition),
+    backdrop-filter var(--p-transition);
+}
+
+.page-nav.is-scrolled {
+  background: var(--p-nav-bg);
+  backdrop-filter: blur(8px);
+}
+
+.page-nav__list {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.page-nav__list a {
+  display: block;
+  padding: 0.35rem 0.75rem;
+  color: var(--foreground);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: var(--p-radius);
+}
+
+.page-nav__list a:hover,
+.page-nav__list a[aria-current="true"] {
+  color: var(--accent);
+}
+
+.page-nav__list a[aria-current="true"] {
+  background: var(--p-accent-soft);
+}
+
+/* 4-2. Button */
+.profile .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.2rem;
+  border: 2px solid var(--p-border-strong);
+  border-radius: var(--p-radius);
+  box-shadow: 3px 3px 0 0 var(--p-border-strong);
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.profile .button:hover {
+  transform: translate(1.5px, 1.5px);
+  box-shadow: 1.5px 1.5px 0 0 var(--p-border-strong);
+  text-decoration: none;
+}
+
+.profile .button--primary {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-color: var(--accent);
+}
+
+.profile .button--ghost {
+  background: var(--p-surface);
+  color: var(--foreground);
+}
+
+/* 4-3. Badge / Card / Chip */
+.profile .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.4rem 0.7rem;
+  background: var(--p-accent-soft);
+  color: var(--accent);
+  border-radius: 0.2rem;
+  font-family: var(--font-press-start-2p), monospace;
+  font-size: 0.65rem;
+  line-height: 1.6;
+}
+
+.profile .badge__dot {
+  animation: blink 1.2s steps(2, start) infinite;
+}
+
+.profile .card {
+  padding: 1.25rem;
+  background: var(--p-surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--p-radius);
+  box-shadow: 3px 3px 0 0 var(--border);
+}
+
+.profile .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.profile .chip {
+  padding: 0.15rem 0.6rem;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 0.2rem;
+  font-size: 0.85rem;
+}
+
+/* 4-4. 비동기 상태 박스 (로딩 / 빈 데이터 / 에러) */
+.profile .state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 1.25rem;
+  background: var(--muted);
+  border: 1.5px dashed var(--p-border-strong);
+  border-radius: var(--p-radius);
+}
+
+.profile .state__title {
+  font-weight: 700;
+}
+
+.profile .state__text {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--muted-foreground);
+}
+
+.profile .state[data-state="error"] {
+  border-color: var(--p-danger);
+}
+
+.profile .state[data-state="error"] .state__title {
+  color: var(--p-danger);
+}
+
+.profile .spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--p-border-strong);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* 4-5. Form */
+.profile .form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.profile .field label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 500;
+}
+
+.profile .field input,
+.profile .field textarea {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  background: var(--background);
+  color: var(--foreground);
+  border: 1.5px solid var(--p-border-strong);
+  border-radius: var(--p-radius);
+  font: inherit;
+  resize: vertical;
+}
+
+.profile .field input:focus-visible,
+.profile .field textarea:focus-visible {
+  outline: 2px dashed var(--accent);
+  outline-offset: 2px;
+}
+
+.profile .field input.is-invalid,
+.profile .field textarea.is-invalid {
+  border-color: var(--p-danger);
+}
+
+.profile .field__error {
+  min-height: 1.4rem;
+  margin-top: 0.25rem;
+  color: var(--p-danger);
+  font-size: 0.875rem;
+}
+
+.profile .form .button {
+  align-self: flex-start;
+}
+
+.profile .form__status {
+  min-height: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.profile .form__status[data-status="success"] {
+  color: var(--accent);
+}
+
+.profile .form__status[data-status="invalid"] {
+  color: var(--p-danger);
+}
+
+/* 4-6. 맨 위로 버튼: 300px 넘게 내리면 JS가 is-visible을 붙인다 */
+.scroll-top {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  background: var(--p-surface);
+  color: var(--foreground);
+  border: 1.5px solid var(--p-border-strong);
+  border-radius: var(--p-radius);
+  box-shadow: 3px 3px 0 0 var(--p-border-strong);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(0.5rem);
+  transition:
+    opacity var(--p-transition),
+    transform var(--p-transition),
+    visibility var(--p-transition),
+    background-color var(--p-transition),
+    color var(--p-transition);
+}
+
+.scroll-top svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.scroll-top:hover {
+  background: var(--p-accent-soft);
+  color: var(--accent);
+}
+
+.scroll-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* ---------- 5. 섹션별 스타일 ---------- */
+
+/* 5-1. Hero */
+.profile .hero {
+  position: relative;
+  isolation: isolate;
+  padding: 1rem;
+}
+
+/* 점 격자 배경 — 아래로 갈수록 서서히 사라진다 */
+.profile .hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 -1rem;
+  z-index: -1;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--p-grid-dot) 1.5px,
+    transparent 0
+  );
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+
+.profile .hero__title {
+  font-size: clamp(1.75rem, 7vw, 2.6rem);
+  line-height: 1.25;
+}
+
+.profile .hero__lead {
+  max-width: 36rem;
+  margin-top: 1.25rem;
+  color: var(--muted-foreground);
+}
+
+.profile .hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* 5-2. About */
+.profile .about {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* 가로 배치에서 아바타가 찌그러지지 않게 한다 */
+.profile .about figure {
+  flex: none;
+}
+
+.profile .about__avatar {
+  display: block;
+  width: 8rem;
+  height: 8rem;
+  background: var(--p-accent-soft);
+  border: 2px solid var(--p-border-strong);
+  border-radius: 0.5rem;
+  box-shadow: 4px 4px 0 0 var(--border);
+  image-rendering: pixelated;
+}
+
+.profile .about__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.profile .facts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.profile .facts__row {
+  display: flex;
+  gap: 1rem;
+}
+
+.profile .facts dt {
+  flex: 0 0 4.5rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.profile .facts dd {
+  margin: 0;
+}
+
+/* 5-3. Skills (Grid: auto-fit + minmax) */
+.profile .skill-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+
+.profile .skill-group__title {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+/* 5-4. Projects (Grid: auto-fit + minmax) */
+.profile .repo-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.profile .repo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  animation: fade-up 0.45s ease both;
+}
+
+.profile .repo-card:nth-child(2) {
+  animation-delay: 0.06s;
+}
+
+.profile .repo-card:nth-child(3) {
+  animation-delay: 0.12s;
+}
+
+.profile .repo-card:nth-child(n + 4) {
+  animation-delay: 0.18s;
+}
+
+.profile .repo-card__title {
+  font-size: 1.05rem;
+  word-break: break-all;
+}
+
+.profile .repo-card__title a {
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.profile .repo-card__title a:hover {
+  color: var(--accent);
+}
+
+.profile .repo-card__desc {
+  flex: 1;
+  color: var(--muted-foreground);
+  font-size: 0.95rem;
+}
+
+.profile .repo-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}
+
+/* 로딩 중 자리 표시 카드 */
+.profile .repo-card--skeleton {
+  animation: none;
+}
+
+.profile .skeleton {
+  display: block;
+  height: 0.9rem;
+  margin-top: 0.6rem;
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    var(--border) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: 0.2rem;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.profile .skeleton--title {
+  width: 55%;
+  height: 1.2rem;
+  margin-top: 0;
+}
+
+.profile .skeleton--short {
+  width: 35%;
+}
+
+/* 5-5. Contact */
+.profile .contact {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.profile .contact__links-title {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.profile .link-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ---------- 6. 애니메이션 / 접근성 ---------- */
+
+/* 스크롤 등장 효과: JS가 is-pending을 붙인 요소만 숨긴다 — JS가 없으면 그냥 보인다 */
+.profile .reveal.is-pending {
+  opacity: 0;
+  transform: translateY(1.25rem);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+
+.profile .reveal.is-pending.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile *,
+  .profile *::before,
+  .profile *::after,
+  .scroll-top {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .profile .reveal.is-pending {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- 7. 반응형 (모바일 퍼스트) ---------- */
+
+/* 태블릿 ≥ 768px: 소개를 가로로 배치하고, 연락 섹션을 2단으로 */
+@media (min-width: 768px) {
+  .profile .section {
+    padding-block: 1.5rem;
+  }
+
+  .profile .section__title {
+    font-size: 1.75rem;
+  }
+
+  .profile .about {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 2rem;
+  }
+
+  .profile .about__avatar {
+    width: 9rem;
+    height: 9rem;
+  }
+
+  .profile .contact {
+    align-items: start;
+  }
+}
+
+/* 데스크톱 ≥ 1024px: 히어로와 여백을 키운다 */
+@media (min-width: 1024px) {
+  .profile .hero {
+    padding: 1rem;
+  }
+
+  .profile .hero__lead {
+    font-size: 1.1rem;
+  }
+
+  .profile .section {
+    padding-block: 1rem;
+  }
+}

@@ -1,0 +1,22 @@
+---
+// 페이지 안의 섹션으로 이동하는 앵커 메뉴.
+// 사이트 헤더는 블로그와 같은 것을 쓰므로, 섹션 이동 메뉴는 본문 위쪽에 따로 둔다.
+const sections = [
+  { href: "#about", label: "About" },
+  { href: "#skills", label: "Skills" },
+  { href: "#projects", label: "Projects" },
+  { href: "#contact", label: "Contact" },
+];
+---
+
+<nav class="page-nav" id="page-nav" aria-label="프로필 섹션">
+  <ul class="page-nav__list">
+    {
+      sections.map(({ href, label }) => (
+        <li>
+          <a href={href}>{label}</a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>

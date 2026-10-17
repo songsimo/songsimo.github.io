@@ -1,51 +1,53 @@
 ---
-import { getEntry, render } from "astro:content";
+/**
+ * /about — 프레임워크 없이(순수 HTML·CSS·JS) 만든 프로필 페이지.
+ *
+ * 블로그의 다른 페이지와 같은 뼈대(Layout · Header · Breadcrumb · Footer) 안에
+ * 섹션 컴포넌트를 순서대로 조립하기만 한다.
+ *   내용·설정  → src/data/about.ts
+ *   마크업     → src/components/about/
+ *   스타일     → src/styles/about.css  (.profile 안으로 한정)
+ *   동작       → src/scripts/about/
+ */
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Breadcrumb from "@/components/Breadcrumb.astro";
-import Main from "@/components/Main.astro";
 import Footer from "@/components/Footer.astro";
-import Socials from "@/components/Socials.astro";
-import { useTranslations } from "@/i18n";
+import SectionNav from "@/components/about/SectionNav.astro";
+import Hero from "@/components/about/Hero.astro";
+import About from "@/components/about/About.astro";
+import Skills from "@/components/about/Skills.astro";
+import Projects from "@/components/about/Projects.astro";
+import Contact from "@/components/about/Contact.astro";
+import ScrollTopButton from "@/components/about/ScrollTopButton.astro";
+import { hero } from "@/data/about";
 import config from "@/config";
-
-const { socials } = config;
-const t = useTranslations(Astro.currentLocale ?? config.site.lang);
-
-const about = await getEntry("pages", "about");
-
-if (!about) {
-  throw new Error(
-    "Missing content entry: `about.md` or `about.mdx` in `src/content/pages/`"
-  );
-}
-
-const { Content } = await render(about);
+import "@/styles/about.css";
 ---
 
 <Layout
-  title={`${about.data.title} | ${config.site.title}`}
-  description={about.data.description}
-  ogImage={about.data.ogImage}
-  canonicalURL={about.data.canonicalURL}
+  title={`프로필 | ${config.site.title}`}
+  description={`${hero.name}의 프로필 페이지. 프레임워크 없이 순수 HTML, CSS, JavaScript로 만들었습니다.`}
 >
   <Header />
 
   <Breadcrumb />
 
-  <Main pageTitle={about.data.title} class="app-prose">
-    <Content />
-    {
-      socials.length > 0 && (
-        <div class="!mt-8 flex max-sm:flex-col sm:items-center">
-          <div class="me-2 mb-1 whitespace-nowrap sm:mb-0">
-            {t.home.socialLinks}:
-          </div>
-          <Socials />
-        </div>
-      )
-    }
-  </Main>
+  <main id="main-content" class="app-layout pb-4">
+    <div class="profile" id="profile">
+      <Hero />
+      <SectionNav />
+      <About />
+      <Skills />
+      <Projects />
+      <Contact />
+      <ScrollTopButton />
+    </div>
+  </main>
 
   <Footer />
+
+  <script>
+    import "@/scripts/about/main.js";
+  </script>
 </Layout>

@@ -1,0 +1,32 @@
+---
+import SectionHeader from "./SectionHeader.astro";
+import { GITHUB_USERNAME, REPO_LIMIT } from "@/data/about";
+---
+
+<!--
+  저장소 카드는 브라우저에서 GitHub API로 불러와 채운다 (src/scripts/about/repos.js).
+  GitHub 아이디와 개수는 data-* 속성으로 스크립트에 넘긴다.
+-->
+<section
+  class="section"
+  id="projects"
+  aria-labelledby="projects-title"
+  tabindex="-1"
+>
+  <SectionHeader
+    id="projects"
+    title="프로젝트"
+    description="GitHub 공개 저장소를 불러와서 보여줍니다. (최근 업데이트 순)"
+  />
+
+  <div
+    id="repo-container"
+    data-github-user={GITHUB_USERNAME}
+    data-repo-limit={REPO_LIMIT}
+    aria-live="polite"
+    aria-busy="true"
+  >
+    <div class="state" id="repo-state" hidden></div>
+    <ul class="repo-grid" id="repo-grid"></ul>
+  </div>
+</section>

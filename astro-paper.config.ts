@@ -35,7 +35,8 @@ export default defineAstroPaperConfig({
   // TODO: 아래 소셜 링크를 실제 계정 주소로 교체하세요 (필요 없는 항목은 삭제해도 됩니다)
   socials: [
     { name: "github", url: "https://github.com/songsimo" },
-    { name: "mail", url: "chy.song89@gmail.com" },
+    { name: "linkedin", url: "https://www.linkedin.com/in/songsimo"},
+    { name: "mail", url: "mailto:chy.song89@gmail.com" },
   ],
   shareLinks: [
     { name: "whatsapp", url: "https://wa.me/?text=" },
