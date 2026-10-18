@@ -46,8 +46,8 @@ import config from "@/config";
           안녕하세요,<br />
           <span class="accent">songsimo</span>입니다.
         </h1>
-        <p class="hero__lead">
-          배운 것은 블로그에 기록하고, 직접 만든 결과물을 모아둡니다.
+        <p class="hero__lead" data-typing>
+          1명의 플레이어로서 여정을 그려나고 있습니다. 현재는 Codyssey AI를 통해 달라지는 세계를 탐험 중입니다.
         </p>
       </section>
 
@@ -108,8 +108,7 @@ import config from "@/config";
               선호합니다.
             </p>
             <p>
-              배운 것은 <a href="/">블로그</a>에 기록으로 남기고, 이 페이지에서
-              직접 만든 결과물을 보여드립니다.
+              배운 것과 경험한 것을 <a href="/">블로그</a>에 기록으로 남기고 있습니다.
             </p>
 
             <dl class="facts">
@@ -203,6 +202,14 @@ import config from "@/config";
           aria-live="polite"
           aria-busy="true"
         >
+          <div
+            class="filter"
+            id="repo-filter"
+            role="group"
+            aria-label="언어별 필터"
+            hidden
+          >
+          </div>
           <div class="state" id="repo-state" hidden></div>
           <ul class="repo-grid" id="repo-grid"></ul>
         </div>
@@ -232,7 +239,13 @@ import config from "@/config";
         </header>
 
         <div class="contact">
-          <form class="card form reveal" id="contact-form" novalidate>
+          <form
+            class="card form reveal"
+            id="contact-form"
+            action="https://formspree.io/f/xppqnjvd"
+            method="post"
+            novalidate
+          >
             <div class="field">
               <label for="contact-name">이름</label>
               <input
@@ -283,6 +296,18 @@ import config from "@/config";
                 data-error-for="message"
               >
               </p>
+            </div>
+
+            <!-- 스팸 봇 방지(Formspree honeypot): 사람 눈에는 보이지 않는다 -->
+            <div class="sr-only" aria-hidden="true">
+              <label for="contact-gotcha">비워 두세요</label>
+              <input
+                type="text"
+                id="contact-gotcha"
+                name="_gotcha"
+                tabindex="-1"
+                autocomplete="off"
+              />
             </div>
 
             <button class="button button--primary" type="submit">보내기</button>

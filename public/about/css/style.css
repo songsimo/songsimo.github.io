@@ -54,6 +54,25 @@
   --p-nav-bg: rgba(21, 29, 22, 0.97);
 }
 
+/* 시스템 설정이 다크이고 아직 data-theme이 정해지지 않았으면(스크립트 실행 전 등)
+   시스템 설정을 따른다. 블로그 헤더가 data-theme을 정하면 위 [data-theme] 규칙이 이어받는다. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --p-bg: #151d16;
+    --p-fg: #eef2ea;
+    --p-accent: #57c17c;
+    --p-accent-fg: #151d16;
+    --p-muted: #202b1f;
+    --p-muted-fg: #a8b6a0;
+    --p-border: #2c3a2c;
+    --p-surface: #1b251c;
+    --p-border-strong: #46594a;
+    --p-accent-soft: rgba(87, 193, 124, 0.14);
+    --p-danger: #ff8a80;
+    --p-grid-dot: rgba(87, 193, 124, 0.2);
+    --p-nav-bg: rgba(21, 29, 22, 0.97);
+  }
+}
 /* ---------- 2. 기본 요소 ----------
    :where()는 우선순위가 0이라, 아래 컴포넌트 규칙이 항상 이긴다. */
 :where(.profile) {
@@ -420,20 +439,18 @@ body:has(#profile) {
   font-size: 0.875rem;
 }
 
-.profile .form .button {
-  align-self: flex-start;
+.profile .form .button:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }
 
-.profile .form__status {
-  min-height: 1.5rem;
-  font-size: 0.95rem;
-}
-
-.profile .form__status[data-status="success"] {
+.profile .form__status[data-status="success"],
+.profile .form__status[data-status="demo"] {
   color: var(--p-accent);
 }
 
-.profile .form__status[data-status="invalid"] {
+.profile .form__status[data-status="invalid"],
+.profile .form__status[data-status="error"] {
   color: var(--p-danger);
 }
 
@@ -684,6 +701,61 @@ body:has(#profile) {
   gap: 0.5rem;
 }
 
+/* 5-6. 프로젝트 언어 필터 (버튼 모양 칩) */
+.profile .filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.profile .filter[hidden] {
+  display: none;
+}
+
+.profile .chip--button {
+  color: var(--p-fg);
+  cursor: pointer;
+  transition:
+    background-color var(--p-transition),
+    color var(--p-transition),
+    border-color var(--p-transition);
+}
+
+.profile .chip--button:hover {
+  border-color: var(--p-accent);
+}
+
+.profile .chip--button[aria-pressed="true"] {
+  background: var(--p-accent);
+  color: var(--p-accent-fg);
+  border-color: var(--p-accent);
+}
+
+.profile .chip--button:focus-visible {
+  outline: 2px dashed var(--p-accent);
+  outline-offset: 2px;
+}
+
+/* 5-7. Hero 타이핑 커서 */
+.profile .typing__caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-inline: 1px;
+  vertical-align: text-bottom;
+  background: var(--p-accent);
+  animation: p-caret 0.9s steps(2, start) infinite;
+}
+
+.profile .typing__caret.is-done {
+  animation: none;
+  visibility: hidden;
+}
+
+.profile .typing__rest {
+  visibility: hidden;
+}
 /* ---------- 6. 애니메이션 / 접근성 ---------- */
 
 /* 스크롤 등장 효과: JS가 is-pending을 붙인 요소만 숨긴다 — JS가 없으면 그냥 보인다 */
@@ -707,6 +779,11 @@ body:has(#profile) {
   }
 }
 
+@keyframes p-caret {
+  to {
+    visibility: hidden;
+  }
+}
 @keyframes p-spin {
   to {
     transform: rotate(360deg);

@@ -3,7 +3,13 @@
  *
  *   입력·blur·제출 이벤트 → 상태(errors, status) 변경 → render가 에러 문구와 스타일을 갱신
  *
- * 이 폼은 보낼 서버가 없는 데모다. 검증을 통과하면 입력을 비우고 안내만 보여준다.
+ * 검증을 통과하면 Formspree(https://formspree.io)로 fetch POST를 보내 실제 이메일을 받는다.
+ * 보낼 주소는 <form action="...">에서 읽는다. 아직 Formspree 폼 ID를 넣지 않았다면
+ * (action에 "your-form-id"가 남아 있으면) 전송 없이 데모 안내만 보여준다.
+ *
+ *   status: idle → (검증 실패) invalid
+ *                → sending → success | error      (Formspree 전송)
+ *                → demo                           (전송 주소 미설정)
  */
 import { $, EMAIL_PATTERN } from "./utils.js";
 import { createStore } from "./store.js";
@@ -26,9 +32,17 @@ const FIELD_RULES = {
 const STATUS_MESSAGES = {
   idle: "",
   invalid: "입력 내용을 다시 확인해주세요.",
-  success:
-    "메시지가 확인되었어요. 다만 이 폼은 데모라서 실제로 전송되지는 않아요.",
+  sending: "보내는 중이에요…",
+  success: "메시지를 보냈어요. 확인하고 답장드릴게요!",
+  error:
+    "전송에 실패했어요. 잠시 뒤에 다시 시도하거나 이메일로 직접 연락해주세요.",
+  demo: "메시지가 확인되었어요. 다만 전송 주소(Formspree)가 아직 설정되지 않아서 실제로 보내지지는 않았어요.",
 };
+
+// Formspree 폼 ID가 비었거나 안내용 자리표시자 그대로면 "미설정"으로 본다
+const isConfigured = endpoint =>
+  endpoint.startsWith("https://formspree.io/f/") &&
+  !endpoint.includes("your-form-id");
 
 const FIELD_NAMES = Object.keys(FIELD_RULES);
 
@@ -41,7 +55,8 @@ const hasError = errors => Object.values(errors).some(Boolean);
 export const initContactForm = () => {
   const form = $("#contact-form");
   const statusEl = $("#form-status");
-  if (!form || !statusEl) return;
+  const submitButton = $('button[type="submit"]', form);
+  if (!form || !statusEl || !submitButton) return;
 
   const controlOf = field => form.elements.namedItem(field);
 
@@ -65,6 +80,8 @@ export const initContactForm = () => {
 
     statusEl.dataset.status = status;
     statusEl.textContent = STATUS_MESSAGES[status];
+    submitButton.disabled = status === "sending";
+    form.setAttribute("aria-busy", String(status === "sending"));
   };
 
   const store = createStore({ errors: emptyErrors(), status: "idle" }, render);
@@ -88,7 +105,7 @@ export const initContactForm = () => {
     if (field && store.get().errors[field]) revalidate(field);
   });
 
-  form.addEventListener("submit", event => {
+  form.addEventListener("submit", async event => {
     event.preventDefault(); // 페이지가 새로고침되는 기본 제출 동작을 막는다
 
     const errors = Object.fromEntries(
@@ -105,7 +122,30 @@ export const initContactForm = () => {
       return;
     }
 
-    form.reset();
-    store.set({ errors: emptyErrors(), status: "success" });
+    const endpoint = form.getAttribute("action") ?? "";
+
+    if (!isConfigured(endpoint)) {
+      form.reset();
+      store.set({ errors: emptyErrors(), status: "demo" });
+      return;
+    }
+
+    store.set({ errors, status: "sending" });
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: new FormData(form),
+        headers: { Accept: "application/json" },
+      });
+
+      if (!response.ok) throw new Error(`Formspree ${response.status}`);
+
+      form.reset();
+      store.set({ errors: emptyErrors(), status: "success" });
+    } catch {
+      // 입력한 내용은 지우지 않는다 (다시 보낼 수 있게)
+      store.set({ status: "error" });
+    }
   });
 };

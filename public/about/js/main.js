@@ -5,7 +5,8 @@
  *   scroll.js  부드러운 스크롤 · 섹션 내비 배경 · 맨 위로 버튼 · 스크롤 스파이
  *   reveal.js  스크롤 등장 효과
  *   repos.js   GitHub 저장소 목록 (로딩/성공/빈 데이터/에러)
- *   form.js    문의 폼 검증
+ *   form.js    문의 폼 검증 + Formspree 전송
+ *   typing.js  Hero 타이핑 효과
  *
  * 다크 모드 토글과 저장(localStorage)은 블로그 헤더가 맡는다.
  * 이 페이지의 CSS는 <html data-theme>이 바뀌는 것만 보고 색을 바꾼다.
@@ -23,6 +24,7 @@ import {
 import { initReveal } from "./reveal.js";
 import { initRepos } from "./repos.js";
 import { initContactForm } from "./form.js";
+import { initTyping } from "./typing.js";
 
 let controller = null;
 
@@ -36,6 +38,7 @@ const start = () => {
   controller = new AbortController();
   const { signal } = controller;
 
+  initTyping(signal);
   initMenu(signal);
   initSmoothScroll();
   initScrollEffects(signal);

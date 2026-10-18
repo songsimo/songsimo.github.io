@@ -9,7 +9,7 @@
  *
  *   fetch 결과 → 상태(status) 변경 → render가 화면을 한 번에 다시 그린다
  */
-import { $, escapeHtml } from "./utils.js";
+import { $, $$, escapeHtml } from "./utils.js";
 import { createStore } from "./store.js";
 
 const formatDate = iso =>
@@ -49,6 +49,33 @@ const repoCard = ({
       </ul>
     </li>`;
 };
+
+// ---- 언어 필터 ----
+const ALL = "all";
+
+// 저장소들에 쓰인 언어를 중복 없이, 많이 쓴 순서로 모은다
+const languagesOf = repos => {
+  const counts = new Map();
+  repos
+    .map(({ language }) => language)
+    .filter(Boolean)
+    .forEach(language => counts.set(language, (counts.get(language) ?? 0) + 1));
+  return [...counts.keys()].sort((a, b) => counts.get(b) - counts.get(a));
+};
+
+// array.filter()로 고른 언어의 저장소만 남긴다
+const filterByLanguage = (repos, language) =>
+  language === ALL ? repos : repos.filter(repo => repo.language === language);
+
+const filterButtons = languages =>
+  [ALL, ...languages]
+    .map(
+      language => `
+      <button class="chip chip--button" type="button" data-language="${escapeHtml(language)}" aria-pressed="false">${
+        language === ALL ? "전체" : escapeHtml(language)
+      }</button>`
+    )
+    .join("");
 
 const skeletonCards = (count = 3) =>
   Array.from(
@@ -110,22 +137,42 @@ export const initRepos = () => {
   const container = $("#repo-container");
   const grid = $("#repo-grid");
   const stateBox = $("#repo-state");
-  if (!container || !grid || !stateBox) return;
+  const filterBox = $("#repo-filter");
+  if (!container || !grid || !stateBox || !filterBox) return;
 
   // about.astro가 data-* 속성으로 넘겨준 설정
   const username = container.dataset.githubUser ?? "";
   const limit = Number(container.dataset.repoLimit) || 6;
 
-  const render = ({ status, repos, error }) => {
+  // 필터 버튼은 저장소 목록이 바뀔 때만 다시 만든다 (클릭할 때마다 만들면 포커스를 잃는다)
+  let renderedRepos = null;
+
+  const render = ({ status, repos, language, error }) => {
     container.setAttribute("aria-busy", String(status === "loading"));
 
     if (status === "loading") {
       grid.innerHTML = skeletonCards();
     } else if (status === "success") {
-      grid.innerHTML = repos.map(repoCard).join("");
+      grid.innerHTML = filterByLanguage(repos, language)
+        .slice(0, limit)
+        .map(repoCard)
+        .join("");
     } else {
       grid.innerHTML = "";
     }
+
+    const showFilter = status === "success" && languagesOf(repos).length > 0;
+    filterBox.hidden = !showFilter;
+    if (showFilter && renderedRepos !== repos) {
+      filterBox.innerHTML = filterButtons(languagesOf(repos));
+      renderedRepos = repos;
+    }
+    $$("[data-language]", filterBox).forEach(button => {
+      button.setAttribute(
+        "aria-pressed",
+        String(button.dataset.language === language)
+      );
+    });
 
     const buildState = STATE_MARKUP[status];
     stateBox.hidden = !buildState;
@@ -134,7 +181,7 @@ export const initRepos = () => {
   };
 
   const store = createStore(
-    { status: "loading", repos: [], error: null },
+    { status: "loading", repos: [], language: ALL, error: null },
     render
   );
 
@@ -153,11 +200,12 @@ export const initRepos = () => {
       }
 
       const data = await response.json();
-      const repos = data.filter(({ fork }) => !fork).slice(0, limit);
+      // 필터가 전체 목록에서 고를 수 있도록, 개수 제한은 화면에 그릴 때 건다
+      const repos = data.filter(({ fork }) => !fork);
 
       store.set(
         repos.length > 0
-          ? { status: "success", repos }
+          ? { status: "success", repos, language: ALL }
           : { status: "empty", repos: [] }
       );
     } catch {
@@ -176,6 +224,15 @@ export const initRepos = () => {
   stateBox.addEventListener("click", ({ target }) => {
     if (target instanceof Element && target.closest('[data-action="retry"]')) {
       loadRepos();
+    }
+  });
+
+  // 필터 버튼도 매번 새로 그려지므로 이벤트 위임으로 처리한다
+  filterBox.addEventListener("click", ({ target }) => {
+    const button =
+      target instanceof Element ? target.closest("[data-language]") : null;
+    if (button instanceof HTMLElement) {
+      store.set({ language: button.dataset.language });
     }
   });
 
