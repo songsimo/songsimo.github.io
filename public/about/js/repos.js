@@ -1,8 +1,18 @@
-import { $, escapeHtml } from "./dom";
-import { createStore } from "./store";
-import type { ApiError, GitHubRepo, RepoState, RepoStatus } from "./types";
+/**
+ * Projects 섹션: GitHub API로 공개 저장소를 불러와 카드로 보여준다.
+ *
+ * 상태는 네 가지다.
+ *   loading  스켈레톤 카드 + "불러오는 중" 안내
+ *   success  저장소 카드 목록
+ *   empty    "공개된 저장소가 없어요" 안내
+ *   error    네트워크 오류 · 서버 오류 · 요청 한도(rate limit) 안내 + 다시 시도 버튼
+ *
+ *   fetch 결과 → 상태(status) 변경 → render가 화면을 한 번에 다시 그린다
+ */
+import { $, escapeHtml } from "./utils.js";
+import { createStore } from "./store.js";
 
-const formatDate = (iso: string) =>
+const formatDate = iso =>
   new Date(iso).toLocaleDateString("ko-KR", {
     year: "numeric",
     month: "short",
@@ -16,7 +26,7 @@ const repoCard = ({
   language,
   stargazers_count: stars = 0,
   updated_at: updatedAt,
-}: GitHubRepo) => {
+}) => {
   // 링크는 https://로 시작하는 주소만 허용한다
   const safeUrl =
     typeof url === "string" && url.startsWith("https://") ? url : "#";
@@ -52,9 +62,7 @@ const skeletonCards = (count = 3) =>
   ).join("");
 
 // 성공 상태는 카드 목록이 직접 보여주므로 안내 박스가 필요 없다.
-const STATE_MARKUP: Partial<
-  Record<RepoStatus, (error: ApiError | null) => string>
-> = {
+const STATE_MARKUP = {
   loading: () => `
     <p class="state__text"><span class="spinner" aria-hidden="true"></span>저장소를 불러오는 중이에요…</p>`,
   empty: () => `
@@ -67,7 +75,7 @@ const STATE_MARKUP: Partial<
 };
 
 // 응답 코드를 사람이 이해할 수 있는 안내로 바꾼다 (레이트 리밋 포함)
-const toApiError = (response: Response, username: string): ApiError => {
+const toApiError = (response, username) => {
   const remaining = response.headers.get("x-ratelimit-remaining");
   const resetAt = Number(response.headers.get("x-ratelimit-reset"));
   const isRateLimited =
@@ -88,7 +96,7 @@ const toApiError = (response: Response, username: string): ApiError => {
   if (response.status === 404) {
     return {
       title: "GitHub 사용자를 찾을 수 없어요",
-      detail: `아이디(${username})가 맞는지 src/data/about.ts의 GITHUB_USERNAME을 확인해주세요.`,
+      detail: `아이디(${username})가 맞는지 about.astro의 data-github-user 값을 확인해주세요.`,
     };
   }
 
@@ -104,11 +112,11 @@ export const initRepos = () => {
   const stateBox = $("#repo-state");
   if (!container || !grid || !stateBox) return;
 
-  // Projects.astro가 data-* 속성으로 넘겨준 설정
+  // about.astro가 data-* 속성으로 넘겨준 설정
   const username = container.dataset.githubUser ?? "";
   const limit = Number(container.dataset.repoLimit) || 6;
 
-  const render = ({ status, repos, error }: RepoState) => {
+  const render = ({ status, repos, error }) => {
     container.setAttribute("aria-busy", String(status === "loading"));
 
     if (status === "loading") {
@@ -125,7 +133,7 @@ export const initRepos = () => {
     stateBox.innerHTML = buildState ? buildState(error) : "";
   };
 
-  const store = createStore<RepoState>(
+  const store = createStore(
     { status: "loading", repos: [], error: null },
     render
   );
@@ -144,7 +152,7 @@ export const initRepos = () => {
         return;
       }
 
-      const data = (await response.json()) as GitHubRepo[]; // json()은 any라서 직접 알려 준다
+      const data = await response.json();
       const repos = data.filter(({ fork }) => !fork).slice(0, limit);
 
       store.set(
@@ -166,7 +174,6 @@ export const initRepos = () => {
 
   // 안내 박스 안의 버튼은 매번 새로 그려지므로 이벤트 위임으로 처리한다
   stateBox.addEventListener("click", ({ target }) => {
-    // target은 EventTarget | null — Element인지 확인해야 closest()를 쓸 수 있다
     if (target instanceof Element && target.closest('[data-action="retry"]')) {
       loadRepos();
     }

@@ -1,11 +1,15 @@
-import { EMAIL_PATTERN } from "./config";
-import { $ } from "./dom";
-import { createStore } from "./store";
-import type { FieldErrors, FieldName, FormState, FormStatus } from "./types";
+/**
+ * 문의 폼 검증.
+ *
+ *   입력·blur·제출 이벤트 → 상태(errors, status) 변경 → render가 에러 문구와 스타일을 갱신
+ *
+ * 이 폼은 보낼 서버가 없는 데모다. 검증을 통과하면 입력을 비우고 안내만 보여준다.
+ */
+import { $, EMAIL_PATTERN } from "./utils.js";
+import { createStore } from "./store.js";
 
-type Rule = (value: string) => string; // 에러 문구를 돌려주고, 통과하면 ""
-
-const FIELD_RULES: Record<FieldName, Rule> = {
+// 에러 문구를 돌려주고, 통과하면 ""
+const FIELD_RULES = {
   name: value => (value ? "" : "이름을 입력해주세요."),
   email: value => {
     if (!value) return "이메일을 입력해주세요.";
@@ -19,45 +23,37 @@ const FIELD_RULES: Record<FieldName, Rule> = {
   },
 };
 
-const STATUS_MESSAGES: Record<FormStatus, string> = {
+const STATUS_MESSAGES = {
   idle: "",
   invalid: "입력 내용을 다시 확인해주세요.",
   success:
     "메시지가 확인되었어요. 다만 이 폼은 데모라서 실제로 전송되지는 않아요.",
 };
 
-// Object.keys는 string[]을 돌려주므로 FieldName[]으로 좁혀 둔다
-const FIELD_NAMES = Object.keys(FIELD_RULES) as FieldName[];
+const FIELD_NAMES = Object.keys(FIELD_RULES);
 
-const isFieldName = (name: string): name is FieldName => name in FIELD_RULES;
+const emptyErrors = () => ({ name: "", email: "", message: "" });
 
-const emptyErrors = (): FieldErrors => ({ name: "", email: "", message: "" });
+const validateField = (field, value) => FIELD_RULES[field](value.trim());
 
-const validateField = (field: FieldName, value: string) =>
-  FIELD_RULES[field](value.trim());
-
-const hasError = (errors: FieldErrors) => Object.values(errors).some(Boolean);
-
-type FormControl = HTMLInputElement | HTMLTextAreaElement;
+const hasError = errors => Object.values(errors).some(Boolean);
 
 export const initContactForm = () => {
-  const form = $<HTMLFormElement>("#contact-form");
+  const form = $("#contact-form");
   const statusEl = $("#form-status");
   if (!form || !statusEl) return;
 
-  // form.elements.namedItem()은 Element | RadioNodeList | null이라서, 우리 입력칸 타입으로 좁혀 쓴다
-  const controlOf = (field: FieldName) =>
-    form.elements.namedItem(field) as FormControl;
+  const controlOf = field => form.elements.namedItem(field);
 
-  // 이벤트 대상(EventTarget | null)이 우리 입력칸이면 필드 이름을, 아니면 null
-  const fieldOf = (target: EventTarget | null): FieldName | null =>
+  // 이벤트 대상이 우리 입력칸이면 필드 이름을, 아니면 null
+  const fieldOf = target =>
     (target instanceof HTMLInputElement ||
       target instanceof HTMLTextAreaElement) &&
-    isFieldName(target.name)
+    FIELD_NAMES.includes(target.name)
       ? target.name
       : null;
 
-  const render = ({ errors, status }: FormState) => {
+  const render = ({ errors, status }) => {
     FIELD_NAMES.forEach(field => {
       const message = errors[field];
       const input = controlOf(field);
@@ -71,13 +67,10 @@ export const initContactForm = () => {
     statusEl.textContent = STATUS_MESSAGES[status];
   };
 
-  const store = createStore<FormState>(
-    { errors: emptyErrors(), status: "idle" },
-    render
-  );
+  const store = createStore({ errors: emptyErrors(), status: "idle" }, render);
 
   // 필드 하나만 다시 검사한다 (blur, 또는 이미 에러가 난 필드를 고치는 중일 때)
-  const revalidate = (field: FieldName) => {
+  const revalidate = field => {
     const errors = {
       ...store.get().errors,
       [field]: validateField(field, controlOf(field).value),
@@ -98,13 +91,12 @@ export const initContactForm = () => {
   form.addEventListener("submit", event => {
     event.preventDefault(); // 페이지가 새로고침되는 기본 제출 동작을 막는다
 
-    // fromEntries는 { [k: string]: string }을 돌려주므로 FieldErrors로 좁혀 준다
     const errors = Object.fromEntries(
       FIELD_NAMES.map(field => [
         field,
         validateField(field, controlOf(field).value),
       ])
-    ) as FieldErrors;
+    );
     const firstInvalid = FIELD_NAMES.find(field => errors[field]);
 
     if (firstInvalid) {
